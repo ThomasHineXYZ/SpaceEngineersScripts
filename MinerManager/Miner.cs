@@ -3,9 +3,8 @@
 // Version 0.1
 // Date: 2019-05-08
 //
-// This script will manage the extending of pistons, stopping the drills, rotor,
-// and pistons if the cargo containers are too full or if the batteries are too
-// empty.
+// https://github.com/guitaristtom/SpaceEngineersScripts/tree/master/MinerManager
+
 
 // =======================================================================================
 //                                                                            --- Configuration ---
@@ -15,12 +14,15 @@
 // =======================================================================================
 
 // The group name for the cargo containers used for the input for the drills
-string inputCargoGroupName = "Outpost - Storage";
+string inputCargoGroupName = "Outpost - Input Storage";
+
+// The group name for the cargo containers used for the input for the drills
+string pistonBlockGroupName = "Outpost - Pistons";
 
 // Keyword for LCDs on the same grid to output data to
 string outputLcdKeyword = "!MinerManagerOutput";
 
-// --- Debug Configuration ---
+// --- Debug Configuration. You shouldn't need to edit this. ---
 // =======================================================================================
 // The names for the standard and debug output LCD screens
 string debugLcdKeyword = "!MinerManagerDebug";
@@ -32,23 +34,30 @@ string debugLcdKeyword = "!MinerManagerDebug";
 // This line and below here can be Minified with https://codebeautify.org/csharpviewer
 
 List<IMyCargoContainer> inputCargoBlocks = new List<IMyCargoContainer>();
+List<IMyPistonBase> pistonBlocks = new List<IMyPistonBase>();
 List<IMyBatteryBlock> batteryBlocks = new List<IMyBatteryBlock>();
 List<IMyTextPanel> debugLcds = new List<IMyTextPanel>();
 List<IMyTextPanel> outputLcds = new List<IMyTextPanel>();
 
 public Program()
 {
-    // Grab the group, and check that it exists
+    // Grab the group of cargo containers, and check that it exists. Set them up.
     IMyBlockGroup inputCargoGroup = GridTerminalSystem.GetBlockGroupWithName(inputCargoGroupName);
     if (inputCargoGroup == null)
     {
         Echo("Cargo group not found.\r\nPlease change the 'inputCargoGroupName' variable");
         return;
     }
-
-    // Set up all of the input cargo containers (WIP echo them all out right now)
-    // inputCargoBlocks = new List<IMyCargoContainer>();
     inputCargoGroup.GetBlocksOfType<IMyCargoContainer>(inputCargoBlocks);
+
+    // Grab the group of pistons, and check that it exists. Then set them up.
+    IMyBlockGroup pistonBlockGroup = GridTerminalSystem.GetBlockGroupWithName(pistonBlockGroupName);
+    if (pistonBlockGroup == null)
+    {
+        Echo("Cargo group not found.\r\nPlease change the 'inputCargoGroupName' variable");
+        return;
+    }
+    pistonBlockGroup.GetBlocksOfType<IMyPistonBase>(pistonBlocks);
 
     // Set up a list for all batteries, and check if any batteries are available
     // on the same immediate grid
@@ -69,14 +78,10 @@ public Program()
     return;
 }
 
-public void Save()
-{
-}
+public void Save() {}
 
 public void DisplayDebug(IMyTextPanel lcd)
 {
-    Echo("DisplayDebug ran!");
-
     // Turn the LCD on
     lcd.Enabled = true;
 
@@ -95,8 +100,6 @@ public void DisplayDebug(IMyTextPanel lcd)
 
 public void DisplayOutput(IMyTextPanel lcd)
 {
-    Echo("DisplayOutput ran!");
-
     // Turn the LCD on
     lcd.Enabled = true;
 
@@ -114,12 +117,23 @@ public void DisplayOutput(IMyTextPanel lcd)
 
 public void Main(string arg)
 {
-    Echo("Main ran!");
-    // List off the names of all the batteries on the immediate grid
+    Echo("Thomas's Miner Manager");
+    Echo("----------------------------------");
+
+    // List off the names of all the input cargo from the group
     Echo($"Input Cargo Blocks:");
     foreach (var cargoBlock in inputCargoBlocks)
     {
         Echo($"- {cargoBlock.CustomName}");
+    }
+
+    Echo("\r\n");
+
+    // List off the names of the pistons from the given group
+    Echo($"Piston Blocks:");
+    foreach (var pistonBlock in pistonBlocks)
+    {
+        Echo($"- {pistonBlock.CustomName}");
     }
 
     Echo("\r\n");
