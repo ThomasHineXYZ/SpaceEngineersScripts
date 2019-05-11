@@ -1,10 +1,8 @@
 // Thomas's Miner Manager Script
 // =============================
-// Version 0.1
-// Date: 2019-05-08
+// Date: 2019-05-11
 //
 // https://github.com/guitaristtom/SpaceEngineersScripts/tree/master/MinerManager
-
 
 // =======================================================================================
 //                                                                            --- Configuration ---
@@ -24,18 +22,18 @@ string outputLcdKeyword = "!MinerManagerOutput";
 
 // --- Debug Configuration. You shouldn't need to edit this. ---
 // =======================================================================================
-// The names for the standard and debug output LCD screens
+// Keyword for LCDs on the same grid to output debug data to
 string debugLcdKeyword = "!MinerManagerDebug";
 
 // =======================================================================================
 //                                                                      --- End of Configuration ---
 //                                                        Don't change anything beyond this point!
 // =======================================================================================
-// This line and below here can be Minified with https://codebeautify.org/csharpviewer
 
 List<IMyCargoContainer> inputCargoBlocks = new List<IMyCargoContainer>();
 List<IMyPistonBase> pistonBlocks = new List<IMyPistonBase>();
 List<IMyBatteryBlock> batteryBlocks = new List<IMyBatteryBlock>();
+List<IMyShipDrill> drillBlocks = new List<IMyShipDrill>();
 List<IMyTextPanel> debugLcds = new List<IMyTextPanel>();
 List<IMyTextPanel> outputLcds = new List<IMyTextPanel>();
 
@@ -54,25 +52,30 @@ public Program()
     IMyBlockGroup pistonBlockGroup = GridTerminalSystem.GetBlockGroupWithName(pistonBlockGroupName);
     if (pistonBlockGroup == null)
     {
-        Echo("Cargo group not found.\r\nPlease change the 'inputCargoGroupName' variable");
+        Echo("Piston group not found.\r\nPlease change the 'pistonBlockGroupName' variable");
         return;
     }
     pistonBlockGroup.GetBlocksOfType<IMyPistonBase>(pistonBlocks);
 
     // Set up a list for all batteries, and check if any batteries are available
     // on the same immediate grid
-    // batteryBlocks = new List<IMyBatteryBlock>();
     GridTerminalSystem.GetBlocksOfType<IMyBatteryBlock>(batteryBlocks, block => block.IsSameConstructAs(Me));
-    if (batteryBlocks == null) // WIP need to check if list is empty
+    if (batteryBlocks == null)
     {
         Echo("No batteries found.\r\nPlease add some batteries and recompile.");
         return;
     }
 
+    // Set up a list for all drills
+    GridTerminalSystem.GetBlocksOfType<IMyShipDrill>(drillBlocks, block => block.IsSameConstructAs(Me));
+    if (drillBlocks == null)
+    {
+        Echo("No drills found.\r\nPlease add some drills and recompile.");
+        return;
+    }
+
     // Set up the LCDs
-    // debugLcds = new List<IMyTextPanel>;
     GridTerminalSystem.GetBlocksOfType<IMyTextPanel>(debugLcds, block => block.CustomName.Contains(debugLcdKeyword));
-    // outputLcds = new List<IMyTextPanel>;
     GridTerminalSystem.GetBlocksOfType<IMyTextPanel>(outputLcds, block => block.CustomName.Contains(outputLcdKeyword));
 
     return;
@@ -80,6 +83,9 @@ public Program()
 
 public void Save() {}
 
+/**
+ * Displays debug data on the given LCD
+ */
 public void DisplayDebug(IMyTextPanel lcd)
 {
     // Turn the LCD on
@@ -98,6 +104,9 @@ public void DisplayDebug(IMyTextPanel lcd)
     return;
 }
 
+/**
+ * Displays the standard data on the given LCD
+ */
 public void DisplayOutput(IMyTextPanel lcd)
 {
     // Turn the LCD on
@@ -106,13 +115,43 @@ public void DisplayOutput(IMyTextPanel lcd)
     // Set the LCD to `text and image` mode
     lcd.ContentType = ContentType.TEXT_AND_IMAGE;
 
-    // First line doesn't have true, so you erase everything
-    lcd.WriteText("This is the standard LCD");
+    // Title
+    lcd.WriteText("Thomas's Miner Manager");
+    lcd.WriteText("\r\n----------------------------------", true);
 
-    // Everything else does, so it appends
-    lcd.WriteText("\n\rNormal LCD things!#!#", true);
+    // Battery Info
+    Dictionary<string, float> batteryInfo = BatteryInfo(batteryBlocks);
+    lcd.WriteText($"\r\nBatteries ("+ batteryBlocks.count + "): " + batteryInfo["percentage"] + "%", true);
 
     return;
+}
+
+/**
+ * Returns info on the given list of batteries
+ */
+public Dictionary<string, float> BatteryInfo(List<IMyBatteryBlock> batteries)
+{
+    // Create a dictionary (associative array) for the battery values
+    Dictionary<string, float> batteryInfo = new Dictionary<string, float>();
+
+    // Iterate through each battery and get the info
+    float powerTotal = 0;
+    float currentPower = 0;
+    foreach (var battery in batteries)
+    {
+        powerTotal += battery.MaxStoredPower;
+        currentPower += battery.CurrentStoredPower;
+    }
+
+    // Calculate the percentage
+    float percentage = (currentPower / powerTotal) * 100;
+
+    // Set the dictionary up
+    batteryInfo["powerTotal"] = powerTotal;
+    batteryInfo["currentPower"] = currentPower;
+    batteryInfo["percentage"] = Math.Round(percentage, 2);
+
+    return batteryInfo;
 }
 
 public void Main(string arg)
@@ -162,4 +201,17 @@ public void Main(string arg)
         DisplayOutput(outputLcd);
     }
 
+    Echo("\r\n");
+    Echo("Drills:");
+    foreach (var drillBlock in drillBlocks)
+    {
+        Echo($"- {drillBlock.CustomName}");
+    }
+
+    Echo("\r\n");
+    Echo("Battery Info:");
+    Dictionary<string, float> batteryInfo = BatteryInfo(batteryBlocks);
+    Echo($"{batteryInfo["powerTotal"]}");
+    Echo($"{batteryInfo["currentPower"]}");
+    Echo($"{batteryInfo["percentage"]}");
 }
