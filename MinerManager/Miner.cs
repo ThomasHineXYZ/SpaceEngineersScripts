@@ -32,6 +32,9 @@ List<IMyCargoContainer> inputCargoBlocks = new List<IMyCargoContainer>();
 List<IMyTextPanel> outputLcds = new List<IMyTextPanel>();
 List<IMyPistonBase> pistonBlocks = new List<IMyPistonBase>();
 
+/**
+ * SE automatically calls this when the program is compiled in game.
+ */
 public Program()
 {
     // Grab the group of cargo containers, and check that it exists. Set them up.
@@ -79,6 +82,9 @@ public Program()
     return;
 }
 
+/**
+ * SE calls this whenever the game is saved or just before it's recompiled.
+ */
 public void Save() {}
 
 /**
@@ -102,7 +108,7 @@ public decimal BatteryPercentage(List<IMyBatteryBlock> batteries)
 }
 
 /**
- * Displays the standard data on the given LCD
+ * Displays the standard data on the given LCD.
  */
 public void DisplayOutput(IMyTextPanel lcd)
 {
@@ -122,14 +128,18 @@ public void DisplayOutput(IMyTextPanel lcd)
     return;
 }
 
-// Echo's other specific info to the programmable block's internal "console"
+/**
+ * Echo's other specific info to the programmable block's internal "console".
+ */
 public void EchoOutput()
 {
     Echo("Thomas's Miner Manager");
     Echo("----------------------------------");
 }
 
-
+/**
+ * Does this need explaining? This is the main method for the entire program.
+ */
 public void Main(string arg)
 {
     // Checks if all of the stuff in "Progam()" ran correctly.
@@ -147,6 +157,8 @@ public void Main(string arg)
 
     // Echo some info as well.
     EchoOutput();
+
+    //********************** This stuff below here will be removed at some point.
 
     // List off the names of all the input cargo from the group
     Echo($"Input Cargo Blocks:");
