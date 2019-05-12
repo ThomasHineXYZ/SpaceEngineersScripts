@@ -20,22 +20,17 @@ string pistonBlockGroupName = "Outpost - Pistons";
 // Keyword for LCDs on the same grid to output data to
 string outputLcdKeyword = "!MinerManagerOutput";
 
-// --- Debug Configuration. You shouldn't need to edit this. ---
-// =======================================================================================
-// Keyword for LCDs on the same grid to output debug data to
-string debugLcdKeyword = "!MinerManagerDebug";
-
 // =======================================================================================
 //                                                                      --- End of Configuration ---
 //                                                        Don't change anything beyond this point!
 // =======================================================================================
 
-List<IMyCargoContainer> inputCargoBlocks = new List<IMyCargoContainer>();
-List<IMyPistonBase> pistonBlocks = new List<IMyPistonBase>();
+bool compileSuccess = false;
 List<IMyBatteryBlock> batteryBlocks = new List<IMyBatteryBlock>();
 List<IMyShipDrill> drillBlocks = new List<IMyShipDrill>();
-List<IMyTextPanel> debugLcds = new List<IMyTextPanel>();
+List<IMyCargoContainer> inputCargoBlocks = new List<IMyCargoContainer>();
 List<IMyTextPanel> outputLcds = new List<IMyTextPanel>();
+List<IMyPistonBase> pistonBlocks = new List<IMyPistonBase>();
 
 public Program()
 {
@@ -78,31 +73,13 @@ public Program()
     GridTerminalSystem.GetBlocksOfType<IMyTextPanel>(debugLcds, block => block.CustomName.Contains(debugLcdKeyword));
     GridTerminalSystem.GetBlocksOfType<IMyTextPanel>(outputLcds, block => block.CustomName.Contains(outputLcdKeyword));
 
+    // Assume everything in here ran and set up correctly.
+    compileSuccess = true;
+
     return;
 }
 
 public void Save() {}
-
-/**
- * Displays debug data on the given LCD
- */
-public void DisplayDebug(IMyTextPanel lcd)
-{
-    // Turn the LCD on
-    lcd.Enabled = true;
-
-    // Set the LCD to `text and image` mode
-    lcd.ContentType = ContentType.TEXT_AND_IMAGE;
-
-    // First line doesn't have true, so you erase everything
-    lcd.WriteText("");
-
-    // Everything else does, so it appends
-    lcd.WriteText("This is the debug LCD", true);
-    lcd.WriteText("\n\rDebug things~!", true);
-
-    return;
-}
 
 /**
  * Returns info on the given list of batteries
@@ -155,6 +132,13 @@ public void EchoOutput()
 
 public void Main(string arg)
 {
+    // Checks if all of the stuff in "Progam()" ran correctly.
+    if (compileSuccess == false)
+    {
+        Echo("Compile was unsuccessful, please retry.");
+        return;
+    }
+
     // Write info to the LCDs
     foreach (var outputLcd in outputLcds)
     {
