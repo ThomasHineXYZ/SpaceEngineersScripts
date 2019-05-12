@@ -105,6 +105,26 @@ public void DisplayDebug(IMyTextPanel lcd)
 }
 
 /**
+ * Returns info on the given list of batteries
+ */
+public decimal BatteryPercentage(List<IMyBatteryBlock> batteries)
+{
+    // Iterate through each battery and get the info
+    float powerTotal = 0;
+    float currentPower = 0;
+    foreach (var battery in batteries)
+    {
+        powerTotal += battery.MaxStoredPower;
+        currentPower += battery.CurrentStoredPower;
+    }
+
+    // Calculate the percentage
+    decimal percentage = Math.Round((currentPower / powerTotal) * 100);
+
+    return batteryInfo;
+}
+
+/**
  * Displays the standard data on the given LCD
  */
 public void DisplayOutput(IMyTextPanel lcd)
@@ -120,44 +140,29 @@ public void DisplayOutput(IMyTextPanel lcd)
     lcd.WriteText("\r\n----------------------------------", true);
 
     // Battery Info
-    Dictionary<string, float> batteryInfo = BatteryInfo(batteryBlocks);
-    lcd.WriteText($"\r\nBatteries ("+ batteryBlocks.count + "): " + batteryInfo["percentage"] + "%", true);
+    lcd.WriteText($"\r\nBatteries ("+ batteryBlocks.Count + "): " + BatteryPercentage(batteryBlocks) + "%", true);
 
     return;
 }
 
-/**
- * Returns info on the given list of batteries
- */
-public Dictionary<string, float> BatteryInfo(List<IMyBatteryBlock> batteries)
-{
-    // Create a dictionary (associative array) for the battery values
-    Dictionary<string, float> batteryInfo = new Dictionary<string, float>();
-
-    // Iterate through each battery and get the info
-    float powerTotal = 0;
-    float currentPower = 0;
-    foreach (var battery in batteries)
-    {
-        powerTotal += battery.MaxStoredPower;
-        currentPower += battery.CurrentStoredPower;
-    }
-
-    // Calculate the percentage
-    float percentage = (currentPower / powerTotal) * 100;
-
-    // Set the dictionary up
-    batteryInfo["powerTotal"] = powerTotal;
-    batteryInfo["currentPower"] = currentPower;
-    batteryInfo["percentage"] = Math.Round(percentage, 2);
-
-    return batteryInfo;
-}
-
-public void Main(string arg)
+// Echo's other specific info to the programmable block's internal "console"
+public void EchoOutput()
 {
     Echo("Thomas's Miner Manager");
     Echo("----------------------------------");
+}
+
+
+public void Main(string arg)
+{
+    // Write info to the LCDs
+    foreach (var outputLcd in outputLcds)
+    {
+        DisplayOutput(outputLcd);
+    }
+
+    // Echo some info as well.
+    EchoOutput();
 
     // List off the names of all the input cargo from the group
     Echo($"Input Cargo Blocks:");
@@ -183,35 +188,4 @@ public void Main(string arg)
     {
         Echo($"- {batteryBlock.CustomName}");
     }
-
-    Echo("\r\n");
-    // Test display output
-    Echo("debugLcd:");
-    foreach (var debugLcd in debugLcds)
-    {
-        Echo($"- {debugLcd.CustomName}");
-        DisplayDebug(debugLcd);
-    }
-
-    Echo("\r\n");
-    Echo("outputLcd:");
-    foreach (var outputLcd in outputLcds)
-    {
-        Echo($"- {outputLcd.CustomName}");
-        DisplayOutput(outputLcd);
-    }
-
-    Echo("\r\n");
-    Echo("Drills:");
-    foreach (var drillBlock in drillBlocks)
-    {
-        Echo($"- {drillBlock.CustomName}");
-    }
-
-    Echo("\r\n");
-    Echo("Battery Info:");
-    Dictionary<string, float> batteryInfo = BatteryInfo(batteryBlocks);
-    Echo($"{batteryInfo["powerTotal"]}");
-    Echo($"{batteryInfo["currentPower"]}");
-    Echo($"{batteryInfo["percentage"]}");
 }
