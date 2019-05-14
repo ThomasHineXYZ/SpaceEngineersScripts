@@ -26,6 +26,7 @@ string outputLcdKeyword = "!MinerManagerOutput";
 // =======================================================================================
 
 bool compileSuccess = false;
+
 List<IMyBatteryBlock> batteryBlocks = new List<IMyBatteryBlock>();
 List<IMyShipDrill> drillBlocks = new List<IMyShipDrill>();
 List<IMyCargoContainer> inputCargoBlocks = new List<IMyCargoContainer>();
@@ -34,9 +35,15 @@ List<IMyPistonBase> pistonBlocks = new List<IMyPistonBase>();
 
 /**
  * SE automatically calls this when the program is compiled in game.
+ *
+ * Initializes the values that are needed for the script only one time, as to
+ * not waste cycles later on.
  */
 public Program()
 {
+    Echo("Thomas's Miner Manager");
+    Echo("----------------------------------");
+
     // Grab the group of cargo containers, and check that it exists. Set them up.
     IMyBlockGroup inputCargoGroup = GridTerminalSystem.GetBlockGroupWithName(inputCargoGroupName);
     if (inputCargoGroup == null)
@@ -45,6 +52,7 @@ public Program()
         return;
     }
     inputCargoGroup.GetBlocksOfType<IMyCargoContainer>(inputCargoBlocks);
+    Echo($"Set up {inputCargoBlocks.Count} input cargo containers.");
 
     // Grab the group of pistons, and check that it exists. Then set them up.
     IMyBlockGroup pistonBlockGroup = GridTerminalSystem.GetBlockGroupWithName(pistonBlockGroupName);
@@ -54,6 +62,7 @@ public Program()
         return;
     }
     pistonBlockGroup.GetBlocksOfType<IMyPistonBase>(pistonBlocks);
+    Echo($"Set up {pistonBlocks.Count} pistons.");
 
     // Set up a list for all batteries, and check if any batteries are available
     // on the same immediate grid
@@ -63,6 +72,7 @@ public Program()
         Echo("No batteries found.\r\nPlease add some batteries and recompile.");
         return;
     }
+    Echo($"Found {batteryBlocks.Count} batteries.");
 
     // Set up a list for all drills
     GridTerminalSystem.GetBlocksOfType<IMyShipDrill>(drillBlocks, block => block.IsSameConstructAs(Me));
@@ -71,9 +81,9 @@ public Program()
         Echo("No drills found.\r\nPlease add some drills and recompile.");
         return;
     }
+    Echo($"Found {drillBlocks.Count} drills.");
 
     // Set up the LCDs
-    GridTerminalSystem.GetBlocksOfType<IMyTextPanel>(debugLcds, block => block.CustomName.Contains(debugLcdKeyword));
     GridTerminalSystem.GetBlocksOfType<IMyTextPanel>(outputLcds, block => block.CustomName.Contains(outputLcdKeyword));
 
     // Assume everything in here ran and set up correctly.
@@ -88,23 +98,45 @@ public Program()
 public void Save() {}
 
 /**
- * Returns info on the given list of batteries
+ * Returns the percentage of how full the batteries are.
  */
-public decimal BatteryPercentage(List<IMyBatteryBlock> batteries)
+public double BatteryPercentage(List<IMyBatteryBlock> batteries)
 {
     // Iterate through each battery and get the info
-    float powerTotal = 0;
     float currentPower = 0;
+    float powerTotal = 0;
     foreach (var battery in batteries)
     {
-        powerTotal += battery.MaxStoredPower;
         currentPower += battery.CurrentStoredPower;
+        powerTotal += battery.MaxStoredPower;
     }
 
     // Calculate the percentage
-    decimal percentage = Math.Round((currentPower / powerTotal) * 100);
+    double percentage = Math.Round((currentPower / powerTotal) * 100, 2);
 
-    return batteryInfo;
+    return percentage;
+}
+
+/**
+ * Returns the percentage of how full the given cargo is
+ */
+public double CargoFullPercentage(List<IMyCargoContainer> cargoBlocks)
+{
+    // Iterate through each battery and get the info
+    float currentUsedStorage = 0;
+    float storageTotal = 0;
+    foreach (var cargoBlock in cargoBlocks)
+    {
+        IMyInventory inventoryData = cargoBlock.GetInventory();
+
+        currentUsedStorage += (float)inventoryData.CurrentVolume;
+        storageTotal += (float)inventoryData.MaxVolume;
+    }
+
+    // Calculate the percentage
+    double percentage = Math.Round((currentUsedStorage / storageTotal) * 100, 2);
+
+    return percentage;
 }
 
 /**
@@ -125,6 +157,10 @@ public void DisplayOutput(IMyTextPanel lcd)
     // Battery Info
     lcd.WriteText($"\r\nBatteries ("+ batteryBlocks.Count + "): " + BatteryPercentage(batteryBlocks) + "%", true);
 
+    // Storage Info
+    lcd.WriteText($"\r\nInput Storage ("+ inputCargoBlocks.Count + "): " +
+        CargoFullPercentage(inputCargoBlocks) + "%", true);
+
     return;
 }
 
@@ -133,8 +169,15 @@ public void DisplayOutput(IMyTextPanel lcd)
  */
 public void EchoOutput()
 {
+    // Title
     Echo("Thomas's Miner Manager");
     Echo("----------------------------------");
+
+    // Battery Info
+    Echo($"Batteries ("+ batteryBlocks.Count + "): " + BatteryPercentage(batteryBlocks) + "%");
+
+    // Storage Info
+    Echo($"Input Storage ("+ inputCargoBlocks.Count + "): " + CargoFullPercentage(inputCargoBlocks) + "%");
 }
 
 /**
@@ -157,31 +200,4 @@ public void Main(string arg)
 
     // Echo some info as well.
     EchoOutput();
-
-    //********************** This stuff below here will be removed at some point.
-
-    // List off the names of all the input cargo from the group
-    Echo($"Input Cargo Blocks:");
-    foreach (var cargoBlock in inputCargoBlocks)
-    {
-        Echo($"- {cargoBlock.CustomName}");
-    }
-
-    Echo("\r\n");
-
-    // List off the names of the pistons from the given group
-    Echo($"Piston Blocks:");
-    foreach (var pistonBlock in pistonBlocks)
-    {
-        Echo($"- {pistonBlock.CustomName}");
-    }
-
-    Echo("\r\n");
-
-    // List off the names of all the batteries on the immediate grid
-    Echo($"Battery Blocks:");
-    foreach (var batteryBlock in batteryBlocks)
-    {
-        Echo($"- {batteryBlock.CustomName}");
-    }
 }
