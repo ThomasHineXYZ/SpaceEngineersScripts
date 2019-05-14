@@ -1,6 +1,6 @@
 // Thomas's Miner Manager Script
 // =============================
-// Date: 2019-05-11
+// Date: 2019-05-14
 //
 // https://github.com/guitaristtom/SpaceEngineersScripts/tree/master/MinerManager
 
