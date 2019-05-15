@@ -17,8 +17,21 @@ string inputCargoGroupName = "Outpost - Input Storage";
 // The group name for the cargo containers used for the input for the drills
 string pistonBlockGroupName = "Outpost - Pistons";
 
+// How fast should the pistons extend / retract? (it needs the f at the end)
+float pistonExtendVelocity = 0.01f;
+float pistonRetractVelocity = 1.00f;
+
+// How long of a delay (in 100 tick increments) should be waited before retracting the drills
+int pistonRetractDelay = 1000;
+
+// How far should the pistons go? (In case you make it shorter for some reason)
+double pistonMinLength = 0.00;
+double pistonMaxLength = 10.00;
+
 // Keyword for LCDs on the same grid to output data to
 string outputLcdKeyword = "!MinerManagerOutput";
+
+
 
 // =======================================================================================
 //                                                                      --- End of Configuration ---
@@ -28,6 +41,9 @@ string outputLcdKeyword = "!MinerManagerOutput";
 bool compileSuccess = false;
 
 string heartBeat = "|";
+string scriptState = "Starting";
+
+IMyPistonBase currentPiston = null;
 
 List<IMyBatteryBlock> batteryBlocks = new List<IMyBatteryBlock>();
 List<IMyShipDrill> drillBlocks = new List<IMyShipDrill>();
@@ -130,21 +146,26 @@ private void BeatHeart()
 {
     // Check which heart beat character is currently stored, then change it
     if (heartBeat == "|") {
-        heartBeat = "/"; return;
+        heartBeat = "/";
+        return;
     };
 
     if (heartBeat == "/") {
-        heartBeat = "-"; return;
+        heartBeat = "-";
+        return;
     };
 
     if (heartBeat == "-") {
-        heartBeat = "\\"; return;
+        heartBeat = "\\";
+        return;
     };
 
     if (heartBeat == "\\") {
-        heartBeat = "|"; return;
+        heartBeat = "|";
+        return;
     };
 
+    // Just in case...
     return;
 }
 
@@ -183,13 +204,16 @@ private void DisplayOutput(IMyTextPanel lcd)
 
     // Title
     lcd.WriteText("Thomas's Miner Manager " + heartBeat);
-    lcd.WriteText("\r\n----------------------------------", true);
+    lcd.WriteText("\r\n------------------------------------", true);
+
+    // Current Script State
+    lcd.WriteText("\r\nScript State: " + scriptState, true);
 
     // Battery Info
-    lcd.WriteText($"\r\nBatteries ("+ batteryBlocks.Count + "): " + BatteryPercentage(batteryBlocks) + "%", true);
+    lcd.WriteText($"\r\nStored Battery ("+ batteryBlocks.Count + ") Power: " + BatteryPercentage(batteryBlocks) + "%", true);
 
     // Storage Info
-    lcd.WriteText($"\r\nInput Storage ("+ inputCargoBlocks.Count + "): " +
+    lcd.WriteText($"\r\nInput Cargo ("+ inputCargoBlocks.Count + ") Fill Level: " +
         CargoFullPercentage(inputCargoBlocks) + "%", true);
 
     return;
@@ -202,13 +226,74 @@ private void EchoOutput()
 {
     // Title
     Echo("Thomas's Miner Manager " + heartBeat);
-    Echo("----------------------------------");
+    Echo("------------------------------------");
+
+    // Current Script State
+    Echo("Script State: " + scriptState);
 
     // Battery Info
-    Echo($"Batteries ("+ batteryBlocks.Count + "): " + BatteryPercentage(batteryBlocks) + "%");
+    Echo($"Stored Power: ("+ batteryBlocks.Count + "): " + BatteryPercentage(batteryBlocks) + "%");
 
     // Storage Info
-    Echo($"Input Storage ("+ inputCargoBlocks.Count + "): " + CargoFullPercentage(inputCargoBlocks) + "%");
+    Echo($"Input Cargo ("+ inputCargoBlocks.Count + ") Fill Level: " + CargoFullPercentage(inputCargoBlocks) + "%");
+
+    // Current Piston
+    if (currentPiston != null) {
+        Echo("");
+        Echo($"Currently extending {currentPiston.CustomName} at {currentPiston.Velocity}m/s");
+        Echo($"Current Piston Position: {Math.Round(currentPiston.CurrentPosition, 2)}m");
+    }
+
+    return;
+}
+
+private void ExtendPiston(IMyPistonBase piston)
+{
+    // Turn the piston on
+    if (piston.Enabled == false) {
+        piston.Enabled = true;
+    }
+
+    // If the piston is set to go faster then it's allowed, set it to the max
+    // it can go.
+    if (piston.Velocity <= piston.MaxVelocity) {
+        piston.Velocity = pistonExtendVelocity;
+    } else {
+        piston.Velocity = piston.MaxVelocity;
+    }
+
+    return;
+}
+
+/**
+ * Grabs the current piston who isn't extended and is working
+ */
+private IMyPistonBase GetCurrentPiston(List<IMyPistonBase> pistons)
+{
+    IMyPistonBase newPiston = null;
+    foreach (var piston in pistons) {
+        if ($"{piston.Status}" != "Extended") {
+            newPiston = piston;
+            break;
+        }
+    }
+
+    return newPiston;
+}
+
+private void SetUpPistons(List<IMyPistonBase> pistons)
+{
+    foreach (var piston in pistons) {
+        // Turn off all of the pistons, just in case
+        piston.Enabled = false;
+
+        // Set their max and min, in case they were changed somehow
+        piston.MinLimit = (float)pistonMinLength;
+        piston.MaxLimit = (float)pistonMaxLength;
+
+        // Set the Velocity to zero
+        piston.Velocity = 0;
+    }
 }
 
 /**
@@ -226,7 +311,21 @@ public void Main(string arg)
     // "Beat" the heart, so the user knows this hasn't died.
     BeatHeart();
 
-    // Write info to the LCDs
+    // Check the script state
+    // "Working": Pistons are going, rotor is spinning, drills are on
+    if (scriptState == "Working") {
+        currentPiston = GetCurrentPiston(pistonBlocks);
+        if (currentPiston == null) {
+            scriptState = "Done?";
+        } else {
+            ExtendPiston(currentPiston);
+        }
+    } else if (scriptState == "Starting") {
+        SetUpPistons(pistonBlocks);
+        scriptState = "Working";
+    }
+
+    // Write info to the LCDs.
     foreach (var outputLcd in outputLcds)
     {
         DisplayOutput(outputLcd);
@@ -234,4 +333,5 @@ public void Main(string arg)
 
     // Echo some info as well.
     EchoOutput();
+
 }
