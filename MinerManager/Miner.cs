@@ -350,29 +350,42 @@ public void Main(string arg)
     // - "Retracting": Currently retracting the pistons
     // - "Completed": The state that the script goes in to once it's completely
     // done running
-    if (scriptState == "Extending") {
-        currentPiston = GetCurrentPiston(pistonBlocks, "Extended");
-        if (currentPiston == null) {
-            scriptState = "Retracting:Delay";
-        } else {
-            ExtendPiston(currentPiston);
-        }
-    } else if (scriptState == "Retracting:Delay") {
-        if (delay >= pistonRetractDelay) {
-            scriptState = "Retracting";
-        } else {
-            delay++;
-            Echo($"Delay set {delay} of {pistonRetractDelay}");
-        }
-    } else if (scriptState == "Retracting") {
-        currentPiston = GetCurrentPiston(pistonBlocks, "Retracted");
-        if (currentPiston == null) {
-            scriptState = "Completed";
-        } else {
-            RetractPiston(currentPiston);
-        }
-    } else if (scriptState == "Starting") {
-        SetUpPistons(pistonBlocks);
-        scriptState = "Extending";
+    switch (scriptState) {
+        case "Starting":
+            SetUpPistons(pistonBlocks);
+            scriptState = "Extending";
+            break;
+
+        case "Extending":
+            currentPiston = GetCurrentPiston(pistonBlocks, "Extended");
+            if (currentPiston == null) {
+                scriptState = "Retracting:Delay";
+            } else {
+                ExtendPiston(currentPiston);
+            }
+            break;
+
+        case "Retracting:Delay":
+            if (delay >= pistonRetractDelay) {
+                scriptState = "Retracting";
+            } else {
+                delay++;
+                Echo($"Delay set {delay} of {pistonRetractDelay}");
+            }
+            break;
+
+        case "Retracting":
+            currentPiston = GetCurrentPiston(pistonBlocks, "Retracted");
+            if (currentPiston == null) {
+                scriptState = "Completed";
+            } else {
+                RetractPiston(currentPiston);
+            }
+            break;
+
+        default:
+            Echo("");
+            Echo($"Unknown state given. Got: {scriptState}");
+            return;
     }
 }
