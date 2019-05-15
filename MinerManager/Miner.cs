@@ -27,6 +27,8 @@ string outputLcdKeyword = "!MinerManagerOutput";
 
 bool compileSuccess = false;
 
+string heartBeat = "|";
+
 List<IMyBatteryBlock> batteryBlocks = new List<IMyBatteryBlock>();
 List<IMyShipDrill> drillBlocks = new List<IMyShipDrill>();
 List<IMyCargoContainer> inputCargoBlocks = new List<IMyCargoContainer>();
@@ -121,6 +123,32 @@ private double BatteryPercentage(List<IMyBatteryBlock> batteries)
 }
 
 /**
+ * Change a character that is shown, just so the user knows the script hasn't
+ * died.
+ */
+private void BeatHeart()
+{
+    // Check which heart beat character is currently stored, then change it
+    if (heartBeat == "|") {
+        heartBeat = "/"; return;
+    };
+
+    if (heartBeat == "/") {
+        heartBeat = "-"; return;
+    };
+
+    if (heartBeat == "-") {
+        heartBeat = "\\"; return;
+    };
+
+    if (heartBeat == "\\") {
+        heartBeat = "|"; return;
+    };
+
+    return;
+}
+
+/**
  * Returns the percentage of how full the given cargo is
  */
 private double CargoFullPercentage(List<IMyCargoContainer> cargoBlocks)
@@ -154,7 +182,7 @@ private void DisplayOutput(IMyTextPanel lcd)
     lcd.ContentType = ContentType.TEXT_AND_IMAGE;
 
     // Title
-    lcd.WriteText("Thomas's Miner Manager");
+    lcd.WriteText("Thomas's Miner Manager " + heartBeat);
     lcd.WriteText("\r\n----------------------------------", true);
 
     // Battery Info
@@ -173,7 +201,7 @@ private void DisplayOutput(IMyTextPanel lcd)
 private void EchoOutput()
 {
     // Title
-    Echo("Thomas's Miner Manager");
+    Echo("Thomas's Miner Manager " + heartBeat);
     Echo("----------------------------------");
 
     // Battery Info
@@ -194,6 +222,9 @@ public void Main(string arg)
         Echo("Compile was unsuccessful, please retry.");
         return;
     }
+
+    // "Beat" the heart, so the user knows this hasn't died.
+    BeatHeart();
 
     // Write info to the LCDs
     foreach (var outputLcd in outputLcds)
