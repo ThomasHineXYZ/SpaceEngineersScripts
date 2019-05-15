@@ -89,6 +89,9 @@ public Program()
     // Assume everything in here ran and set up correctly.
     compileSuccess = true;
 
+    // Configure this program to run every 100 update ticks
+    Runtime.UpdateFrequency = UpdateFrequency.Update100;
+
     return;
 }
 
