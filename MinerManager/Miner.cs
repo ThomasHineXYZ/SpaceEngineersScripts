@@ -103,7 +103,7 @@ public void Save() {}
 /**
  * Returns the percentage of how full the batteries are.
  */
-public double BatteryPercentage(List<IMyBatteryBlock> batteries)
+private double BatteryPercentage(List<IMyBatteryBlock> batteries)
 {
     // Iterate through each battery and get the info
     float currentPower = 0;
@@ -123,7 +123,7 @@ public double BatteryPercentage(List<IMyBatteryBlock> batteries)
 /**
  * Returns the percentage of how full the given cargo is
  */
-public double CargoFullPercentage(List<IMyCargoContainer> cargoBlocks)
+private double CargoFullPercentage(List<IMyCargoContainer> cargoBlocks)
 {
     // Iterate through each battery and get the info
     float currentUsedStorage = 0;
@@ -145,7 +145,7 @@ public double CargoFullPercentage(List<IMyCargoContainer> cargoBlocks)
 /**
  * Displays the standard data on the given LCD.
  */
-public void DisplayOutput(IMyTextPanel lcd)
+private void DisplayOutput(IMyTextPanel lcd)
 {
     // Turn the LCD on
     lcd.Enabled = true;
@@ -170,7 +170,7 @@ public void DisplayOutput(IMyTextPanel lcd)
 /**
  * Echo's other specific info to the programmable block's internal "console".
  */
-public void EchoOutput()
+private void EchoOutput()
 {
     // Title
     Echo("Thomas's Miner Manager");
