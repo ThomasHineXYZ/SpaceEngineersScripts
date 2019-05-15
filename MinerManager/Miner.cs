@@ -17,14 +17,16 @@ string inputCargoGroupName = "Outpost - Input Storage";
 // The group name for the cargo containers used for the input for the drills
 string pistonBlockGroupName = "Outpost - Pistons";
 
-// How fast should the pistons extend / retract? (it needs the f at the end)
+// How fast should the pistons extend / retract? (IT NEEDS the 'f' at the end)
 float pistonExtendVelocity = 0.01f;
-float pistonRetractVelocity = 1.00f;
+float pistonRetractVelocity = 0.50f;
 
-// How long of a delay (in 100 tick increments) should be waited before retracting the drills
-int pistonRetractDelay = 1000;
+// How long of a delay (in ~100 tick increments) should be waited before
+// retracting the drills
+int pistonRetractDelay = 100;
 
-// How far should the pistons go? (In case you make it shorter for some reason)
+// How far should the pistons go and retract? Between 0.00 and 10.00
+// (In case you make it shorter for some reason)
 double pistonMinLength = 0.00;
 double pistonMaxLength = 10.00;
 
@@ -39,6 +41,8 @@ string outputLcdKeyword = "!MinerManagerOutput";
 // =======================================================================================
 
 bool compileSuccess = false;
+
+int delay = 0;
 
 string heartBeat = "|";
 string scriptState = "Starting";
@@ -232,21 +236,28 @@ private void EchoOutput()
     Echo("Script State: " + scriptState);
 
     // Battery Info
-    Echo($"Stored Power: ("+ batteryBlocks.Count + "): " + BatteryPercentage(batteryBlocks) + "%");
+    Echo($"Stored Battery ("+ batteryBlocks.Count + ") Power: " + BatteryPercentage(batteryBlocks) + "%");
 
     // Storage Info
     Echo($"Input Cargo ("+ inputCargoBlocks.Count + ") Fill Level: " + CargoFullPercentage(inputCargoBlocks) + "%");
 
     // Current Piston
-    if (currentPiston != null) {
+    if (currentPiston != null && scriptState == "Extending") {
         Echo("");
         Echo($"Currently extending {currentPiston.CustomName} at {currentPiston.Velocity}m/s");
-        Echo($"Current Piston Position: {Math.Round(currentPiston.CurrentPosition, 2)}m");
+        Echo($"{currentPiston.CustomName} Position: {Math.Round(currentPiston.CurrentPosition, 2)}m");
+    } else if (currentPiston != null && scriptState == "Retracting") {
+        Echo("");
+        Echo($"Currently retracting {currentPiston.CustomName} at {currentPiston.Velocity * -1}m/s");
+        Echo($"{currentPiston.CustomName} Position: {Math.Round(currentPiston.CurrentPosition, 2)}m");
     }
 
     return;
 }
 
+/**
+ * Set the given piston to the supplied velocity for it to extend
+ */
 private void ExtendPiston(IMyPistonBase piston)
 {
     // Turn the piston on
@@ -268,11 +279,11 @@ private void ExtendPiston(IMyPistonBase piston)
 /**
  * Grabs the current piston who isn't extended and is working
  */
-private IMyPistonBase GetCurrentPiston(List<IMyPistonBase> pistons)
+private IMyPistonBase GetCurrentPiston(List<IMyPistonBase> pistons, string state)
 {
     IMyPistonBase newPiston = null;
     foreach (var piston in pistons) {
-        if ($"{piston.Status}" != "Extended") {
+        if ($"{piston.Status}" != state && piston.IsFunctional == true) {
             newPiston = piston;
             break;
         }
@@ -281,6 +292,18 @@ private IMyPistonBase GetCurrentPiston(List<IMyPistonBase> pistons)
     return newPiston;
 }
 
+/**
+ * Set the given piston to the supplied velocity (and multiply by -1) for it to
+ * retract
+ */
+private void RetractPiston(IMyPistonBase piston)
+{
+    piston.Velocity = pistonRetractVelocity * -1;
+}
+
+/**
+ * Sets up the values for the pistons to a proper, default, good, known state.
+ */
 private void SetUpPistons(List<IMyPistonBase> pistons)
 {
     foreach (var piston in pistons) {
@@ -311,20 +334,6 @@ public void Main(string arg)
     // "Beat" the heart, so the user knows this hasn't died.
     BeatHeart();
 
-    // Check the script state
-    // "Working": Pistons are going, rotor is spinning, drills are on
-    if (scriptState == "Working") {
-        currentPiston = GetCurrentPiston(pistonBlocks);
-        if (currentPiston == null) {
-            scriptState = "Done?";
-        } else {
-            ExtendPiston(currentPiston);
-        }
-    } else if (scriptState == "Starting") {
-        SetUpPistons(pistonBlocks);
-        scriptState = "Working";
-    }
-
     // Write info to the LCDs.
     foreach (var outputLcd in outputLcds)
     {
@@ -334,4 +343,36 @@ public void Main(string arg)
     // Echo some info as well.
     EchoOutput();
 
+    // Check the script state
+    // - "Working": Pistons are going, rotor is spinning, drills are on
+    // - "Retracting:Delay": Timer after the pistons are done extending that the
+    // system waits before retracting the pistons
+    // - "Retracting": Currently retracting the pistons
+    // - "Completed": The state that the script goes in to once it's completely
+    // done running
+    if (scriptState == "Extending") {
+        currentPiston = GetCurrentPiston(pistonBlocks, "Extended");
+        if (currentPiston == null) {
+            scriptState = "Retracting:Delay";
+        } else {
+            ExtendPiston(currentPiston);
+        }
+    } else if (scriptState == "Retracting:Delay") {
+        if (delay >= pistonRetractDelay) {
+            scriptState = "Retracting";
+        } else {
+            delay++;
+            Echo($"Delay set {delay} of {pistonRetractDelay}");
+        }
+    } else if (scriptState == "Retracting") {
+        currentPiston = GetCurrentPiston(pistonBlocks, "Retracted");
+        if (currentPiston == null) {
+            scriptState = "Completed";
+        } else {
+            RetractPiston(currentPiston);
+        }
+    } else if (scriptState == "Starting") {
+        SetUpPistons(pistonBlocks);
+        scriptState = "Extending";
+    }
 }
