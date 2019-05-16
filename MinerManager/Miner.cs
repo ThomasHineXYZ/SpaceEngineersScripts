@@ -1,6 +1,6 @@
 // Thomas's Miner Manager Script
 // =============================
-// Date: 2019-05-14
+// Date: 2019-05-16
 //
 // https://github.com/guitaristtom/SpaceEngineersScripts/tree/master/MinerManager
 
@@ -14,8 +14,14 @@
 // The group name for the cargo containers used for the input for the drills.
 string inputCargoGroupName = "Outpost - Input Storage";
 
+// The name for the advanced rotor that is used for spinning the drills
+string advancedRotorName = "Outpost - Advanced Rotor";
+
 // The group name for the pistons that are used for pushing the drills.
 string pistonBlockGroupName = "Outpost - Pistons";
+
+// --- Non-Essential Configuration ---
+// =======================================================================================
 
 // How fast should the pistons extend / retract? (IT NEEDS the 'f' at the end)
 float pistonExtendVelocity = 0.01f;
@@ -51,6 +57,7 @@ string heartBeat = "|";
 string scriptState = "Starting";
 
 IMyPistonBase currentPiston = null;
+IMyMotorAdvancedRotor advancedRotor = null;
 
 List<IMyBatteryBlock> batteryBlocks = new List<IMyBatteryBlock>();
 List<IMyShipDrill> drillBlocks = new List<IMyShipDrill>();
@@ -68,10 +75,24 @@ public Program() {
     Echo("Thomas's Miner Manager");
     Echo("----------------------------------");
 
+    // Set up the advanced rotor.
+    advancedRotor = GridTerminalSystem.GetBlockWithName(advancedRotorName) as IMyMotorAdvancedRotor;
+    if (advancedRotor == null)
+    {
+        Echo("Advanced Rotor not found.\r\nPlease change the 'advancedRotorName' variable.");
+        return;
+    }
+
     // Grab the group of cargo containers, and check that it exists. Set them up.
     IMyBlockGroup inputCargoGroup = GridTerminalSystem.GetBlockGroupWithName(inputCargoGroupName);
+<<<<<<< Updated upstream
     if (inputCargoGroup == null) {
         Echo("Cargo group not found.\r\nPlease change the 'inputCargoGroupName' variable");
+=======
+    if (inputCargoGroup == null)
+    {
+        Echo("Cargo group not found.\r\nPlease change the 'inputCargoGroupName' variable.");
+>>>>>>> Stashed changes
         return;
     }
     inputCargoGroup.GetBlocksOfType<IMyCargoContainer>(inputCargoBlocks);
@@ -79,8 +100,14 @@ public Program() {
 
     // Grab the group of pistons, and check that it exists. Then set them up.
     IMyBlockGroup pistonBlockGroup = GridTerminalSystem.GetBlockGroupWithName(pistonBlockGroupName);
+<<<<<<< Updated upstream
     if (pistonBlockGroup == null) {
         Echo("Piston group not found.\r\nPlease change the 'pistonBlockGroupName' variable");
+=======
+    if (pistonBlockGroup == null)
+    {
+        Echo("Piston group not found.\r\nPlease change the 'pistonBlockGroupName' variable.");
+>>>>>>> Stashed changes
         return;
     }
     pistonBlockGroup.GetBlocksOfType<IMyPistonBase>(pistonBlocks);
@@ -231,6 +258,9 @@ private void EchoOutput() {
     // Storage Info
     Echo($"Input Cargo ("+ inputCargoBlocks.Count + ") Fill Level: " + CargoFullPercentage(inputCargoBlocks) + "%");
 
+    // Advanced Rotor
+    Echo($"Rotor: {advancedRotor.Velocity}");
+
     // Current Piston
     if (currentPiston != null && scriptState == "Extending") {
         Echo("");
@@ -310,7 +340,7 @@ private void SetUpPistons(List<IMyPistonBase> pistons) {
  */
 private void StopPiston(IMyPistonBase piston) {
     // Turn the piston on
-    piston.Enabled = false
+    piston.Enabled = false;
 
     // Set its velocity to zero
     piston.Velocity = 0;
