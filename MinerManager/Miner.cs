@@ -64,15 +64,13 @@ List<IMyPistonBase> pistonBlocks = new List<IMyPistonBase>();
  * Initializes the values that are needed for the script only one time, as to
  * not waste cycles later on.
  */
-public Program()
-{
+public Program() {
     Echo("Thomas's Miner Manager");
     Echo("----------------------------------");
 
     // Grab the group of cargo containers, and check that it exists. Set them up.
     IMyBlockGroup inputCargoGroup = GridTerminalSystem.GetBlockGroupWithName(inputCargoGroupName);
-    if (inputCargoGroup == null)
-    {
+    if (inputCargoGroup == null) {
         Echo("Cargo group not found.\r\nPlease change the 'inputCargoGroupName' variable");
         return;
     }
@@ -81,8 +79,7 @@ public Program()
 
     // Grab the group of pistons, and check that it exists. Then set them up.
     IMyBlockGroup pistonBlockGroup = GridTerminalSystem.GetBlockGroupWithName(pistonBlockGroupName);
-    if (pistonBlockGroup == null)
-    {
+    if (pistonBlockGroup == null) {
         Echo("Piston group not found.\r\nPlease change the 'pistonBlockGroupName' variable");
         return;
     }
@@ -92,8 +89,7 @@ public Program()
     // Set up a list for all batteries, and check if any batteries are available
     // on the same immediate grid.
     GridTerminalSystem.GetBlocksOfType<IMyBatteryBlock>(batteryBlocks, block => block.IsSameConstructAs(Me));
-    if (batteryBlocks == null)
-    {
+    if (batteryBlocks == null) {
         Echo("No batteries found.\r\nPlease add some batteries and recompile.");
         return;
     }
@@ -101,8 +97,7 @@ public Program()
 
     // Set up a list for all drills.
     GridTerminalSystem.GetBlocksOfType<IMyShipDrill>(drillBlocks, block => block.IsSameConstructAs(Me));
-    if (drillBlocks == null)
-    {
+    if (drillBlocks == null) {
         Echo("No drills found.\r\nPlease add some drills and recompile.");
         return;
     }
@@ -128,13 +123,11 @@ public void Save() {}
 /**
  * Returns the percentage of how full the batteries are.
  */
-private double BatteryPercentage(List<IMyBatteryBlock> batteries)
-{
+private double BatteryPercentage(List<IMyBatteryBlock> batteries) {
     // Iterate through each battery and get the info.
     float currentPower = 0;
     float powerTotal = 0;
-    foreach (var battery in batteries)
-    {
+    foreach (var battery in batteries) {
         currentPower += battery.CurrentStoredPower;
         powerTotal += battery.MaxStoredPower;
     }
@@ -149,9 +142,7 @@ private double BatteryPercentage(List<IMyBatteryBlock> batteries)
  * Change a character that is shown, just so the user knows the script hasn't
  * died.
  */
-private void BeatHeart()
-{
-    // Check which heart beat character is currently stored, then change it.
+private void BeatHeart() {
     if (heartBeat == "|") {
         heartBeat = "/";
         return;
@@ -179,13 +170,11 @@ private void BeatHeart()
 /**
  * Returns the percentage of how full the given cargo is.
  */
-private double CargoFullPercentage(List<IMyCargoContainer> cargoBlocks)
-{
+private double CargoFullPercentage(List<IMyCargoContainer> cargoBlocks) {
     // Iterate through each cargo container and get the info from them.
     float currentUsedStorage = 0;
     float storageTotal = 0;
-    foreach (var cargoBlock in cargoBlocks)
-    {
+    foreach (var cargoBlock in cargoBlocks) {
         IMyInventory inventoryData = cargoBlock.GetInventory();
 
         currentUsedStorage += (float)inventoryData.CurrentVolume;
@@ -201,8 +190,7 @@ private double CargoFullPercentage(List<IMyCargoContainer> cargoBlocks)
 /**
  * Displays the standard data on the given LCD.
  */
-private void DisplayOutput(IMyTextPanel lcd)
-{
+private void DisplayOutput(IMyTextPanel lcd) {
     // Turn the LCD on.
     lcd.Enabled = true;
 
@@ -229,8 +217,7 @@ private void DisplayOutput(IMyTextPanel lcd)
 /**
  * Echo's other specific info to the programmable block's internal "console".
  */
-private void EchoOutput()
-{
+private void EchoOutput() {
     // Title
     Echo("Thomas's Miner Manager " + heartBeat);
     Echo("------------------------------------");
@@ -261,8 +248,7 @@ private void EchoOutput()
 /**
  * Set the given piston to the supplied velocity for it to extend.
  */
-private void ExtendPiston(IMyPistonBase piston)
-{
+private void ExtendPiston(IMyPistonBase piston) {
     // Turn the piston on
     if (piston.Enabled == false) {
         piston.Enabled = true;
@@ -282,8 +268,7 @@ private void ExtendPiston(IMyPistonBase piston)
 /**
  * Grabs the current piston who isn't extended and is working.
  */
-private IMyPistonBase GetCurrentPiston(List<IMyPistonBase> pistons, string state)
-{
+private IMyPistonBase GetCurrentPiston(List<IMyPistonBase> pistons, string state) {
     IMyPistonBase newPiston = null;
     foreach (var piston in pistons) {
         if ($"{piston.Status}" != state && piston.IsFunctional == true) {
@@ -299,16 +284,14 @@ private IMyPistonBase GetCurrentPiston(List<IMyPistonBase> pistons, string state
  * Set the given piston to the supplied velocity (and multiply by -1) for it to
  * retract.
  */
-private void RetractPiston(IMyPistonBase piston)
-{
+private void RetractPiston(IMyPistonBase piston) {
     piston.Velocity = pistonRetractVelocity * -1;
 }
 
 /**
  * Sets up the values for the pistons to a proper, default, good, known state.
  */
-private void SetUpPistons(List<IMyPistonBase> pistons)
-{
+private void SetUpPistons(List<IMyPistonBase> pistons) {
     foreach (var piston in pistons) {
         // Turn off all of the pistons, just in case.
         piston.Enabled = false;
@@ -325,8 +308,7 @@ private void SetUpPistons(List<IMyPistonBase> pistons)
 /**
  * Turn off the given piston, and set its velocity to zero.
  */
-private void StopPiston(IMyPistonBase piston)
-{
+private void StopPiston(IMyPistonBase piston) {
     // Turn the piston on
     piston.Enabled = false
 
@@ -337,11 +319,9 @@ private void StopPiston(IMyPistonBase piston)
 /**
  * Does this need explaining? This is the main method for the entire program.
  */
-public void Main(string arg)
-{
+public void Main(string arg) {
     // Checks if all of the stuff in "Progam()" ran correctly.
-    if (compileSuccess == false)
-    {
+    if (compileSuccess == false) {
         Echo("Compile was unsuccessful, please retry.");
         return;
     }
@@ -350,8 +330,7 @@ public void Main(string arg)
     BeatHeart();
 
     // Write info to the LCDs.
-    foreach (var outputLcd in outputLcds)
-    {
+    foreach (var outputLcd in outputLcds) {
         DisplayOutput(outputLcd);
     }
 
