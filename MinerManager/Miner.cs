@@ -85,14 +85,8 @@ public Program() {
 
     // Grab the group of cargo containers, and check that it exists. Set them up.
     IMyBlockGroup inputCargoGroup = GridTerminalSystem.GetBlockGroupWithName(inputCargoGroupName);
-<<<<<<< Updated upstream
     if (inputCargoGroup == null) {
         Echo("Cargo group not found.\r\nPlease change the 'inputCargoGroupName' variable");
-=======
-    if (inputCargoGroup == null)
-    {
-        Echo("Cargo group not found.\r\nPlease change the 'inputCargoGroupName' variable.");
->>>>>>> Stashed changes
         return;
     }
     inputCargoGroup.GetBlocksOfType<IMyCargoContainer>(inputCargoBlocks);
@@ -100,14 +94,8 @@ public Program() {
 
     // Grab the group of pistons, and check that it exists. Then set them up.
     IMyBlockGroup pistonBlockGroup = GridTerminalSystem.GetBlockGroupWithName(pistonBlockGroupName);
-<<<<<<< Updated upstream
     if (pistonBlockGroup == null) {
         Echo("Piston group not found.\r\nPlease change the 'pistonBlockGroupName' variable");
-=======
-    if (pistonBlockGroup == null)
-    {
-        Echo("Piston group not found.\r\nPlease change the 'pistonBlockGroupName' variable.");
->>>>>>> Stashed changes
         return;
     }
     pistonBlockGroup.GetBlocksOfType<IMyPistonBase>(pistonBlocks);
