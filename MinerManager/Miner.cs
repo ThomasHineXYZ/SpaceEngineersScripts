@@ -11,10 +11,10 @@
 // --- Essential Configuration ---
 // =======================================================================================
 
-// The group name for the cargo containers used for the input for the drills
+// The group name for the cargo containers used for the input for the drills.
 string inputCargoGroupName = "Outpost - Input Storage";
 
-// The group name for the cargo containers used for the input for the drills
+// The group name for the pistons that are used for pushing the drills.
 string pistonBlockGroupName = "Outpost - Pistons";
 
 // How fast should the pistons extend / retract? (IT NEEDS the 'f' at the end)
@@ -22,7 +22,7 @@ float pistonExtendVelocity = 0.01f;
 float pistonRetractVelocity = 0.50f;
 
 // How long of a delay (in ~100 tick increments) should be waited before
-// retracting the drills
+// retracting the drills.
 int pistonRetractDelay = 100;
 
 // How far should the pistons go and retract? Between 0.00 and 10.00
@@ -30,10 +30,13 @@ int pistonRetractDelay = 100;
 double pistonMinLength = 0.00;
 double pistonMaxLength = 10.00;
 
-// Keyword for LCDs on the same grid to output data to
-string outputLcdKeyword = "!MinerManagerOutput";
+// Battery Percentages. Max and Min for flagging.
+int batteryLowerLimit = 25;
+int batteryUpperLimit = 75;
 
-
+// Cargo Percentages. Max and Min for flagging.
+int cargoLowerLimit = 25;
+int cargoUpperLimit = 75;
 
 // =======================================================================================
 //                                                                      --- End of Configuration ---
@@ -87,7 +90,7 @@ public Program()
     Echo($"Set up {pistonBlocks.Count} pistons.");
 
     // Set up a list for all batteries, and check if any batteries are available
-    // on the same immediate grid
+    // on the same immediate grid.
     GridTerminalSystem.GetBlocksOfType<IMyBatteryBlock>(batteryBlocks, block => block.IsSameConstructAs(Me));
     if (batteryBlocks == null)
     {
@@ -96,7 +99,7 @@ public Program()
     }
     Echo($"Found {batteryBlocks.Count} batteries.");
 
-    // Set up a list for all drills
+    // Set up a list for all drills.
     GridTerminalSystem.GetBlocksOfType<IMyShipDrill>(drillBlocks, block => block.IsSameConstructAs(Me));
     if (drillBlocks == null)
     {
@@ -105,13 +108,13 @@ public Program()
     }
     Echo($"Found {drillBlocks.Count} drills.");
 
-    // Set up the LCDs
-    GridTerminalSystem.GetBlocksOfType<IMyTextPanel>(outputLcds, block => block.CustomName.Contains(outputLcdKeyword));
+    // Set up the LCDs.
+    GridTerminalSystem.GetBlocksOfType<IMyTextPanel>(outputLcds, block => block.CustomName.Contains("!MinerManagerOutput"));
 
     // Assume everything in here ran and set up correctly.
     compileSuccess = true;
 
-    // Configure this program to run every 100 update ticks
+    // Configure this program to run every 100 update ticks.
     Runtime.UpdateFrequency = UpdateFrequency.Update100;
 
     return;
@@ -127,7 +130,7 @@ public void Save() {}
  */
 private double BatteryPercentage(List<IMyBatteryBlock> batteries)
 {
-    // Iterate through each battery and get the info
+    // Iterate through each battery and get the info.
     float currentPower = 0;
     float powerTotal = 0;
     foreach (var battery in batteries)
@@ -136,7 +139,7 @@ private double BatteryPercentage(List<IMyBatteryBlock> batteries)
         powerTotal += battery.MaxStoredPower;
     }
 
-    // Calculate the percentage
+    // Calculate the percentage.
     double percentage = Math.Round((currentPower / powerTotal) * 100, 2);
 
     return percentage;
@@ -148,7 +151,7 @@ private double BatteryPercentage(List<IMyBatteryBlock> batteries)
  */
 private void BeatHeart()
 {
-    // Check which heart beat character is currently stored, then change it
+    // Check which heart beat character is currently stored, then change it.
     if (heartBeat == "|") {
         heartBeat = "/";
         return;
@@ -174,11 +177,11 @@ private void BeatHeart()
 }
 
 /**
- * Returns the percentage of how full the given cargo is
+ * Returns the percentage of how full the given cargo is.
  */
 private double CargoFullPercentage(List<IMyCargoContainer> cargoBlocks)
 {
-    // Iterate through each battery and get the info
+    // Iterate through each cargo container and get the info from them.
     float currentUsedStorage = 0;
     float storageTotal = 0;
     foreach (var cargoBlock in cargoBlocks)
@@ -189,7 +192,7 @@ private double CargoFullPercentage(List<IMyCargoContainer> cargoBlocks)
         storageTotal += (float)inventoryData.MaxVolume;
     }
 
-    // Calculate the percentage
+    // Calculate the percentage.
     double percentage = Math.Round((currentUsedStorage / storageTotal) * 100, 2);
 
     return percentage;
@@ -200,10 +203,10 @@ private double CargoFullPercentage(List<IMyCargoContainer> cargoBlocks)
  */
 private void DisplayOutput(IMyTextPanel lcd)
 {
-    // Turn the LCD on
+    // Turn the LCD on.
     lcd.Enabled = true;
 
-    // Set the LCD to `text and image` mode
+    // Set the LCD to `text and image` mode.
     lcd.ContentType = ContentType.TEXT_AND_IMAGE;
 
     // Title
@@ -256,7 +259,7 @@ private void EchoOutput()
 }
 
 /**
- * Set the given piston to the supplied velocity for it to extend
+ * Set the given piston to the supplied velocity for it to extend.
  */
 private void ExtendPiston(IMyPistonBase piston)
 {
@@ -277,7 +280,7 @@ private void ExtendPiston(IMyPistonBase piston)
 }
 
 /**
- * Grabs the current piston who isn't extended and is working
+ * Grabs the current piston who isn't extended and is working.
  */
 private IMyPistonBase GetCurrentPiston(List<IMyPistonBase> pistons, string state)
 {
@@ -294,7 +297,7 @@ private IMyPistonBase GetCurrentPiston(List<IMyPistonBase> pistons, string state
 
 /**
  * Set the given piston to the supplied velocity (and multiply by -1) for it to
- * retract
+ * retract.
  */
 private void RetractPiston(IMyPistonBase piston)
 {
@@ -307,16 +310,28 @@ private void RetractPiston(IMyPistonBase piston)
 private void SetUpPistons(List<IMyPistonBase> pistons)
 {
     foreach (var piston in pistons) {
-        // Turn off all of the pistons, just in case
+        // Turn off all of the pistons, just in case.
         piston.Enabled = false;
 
-        // Set their max and min, in case they were changed somehow
+        // Set their max and min, in case they were changed somehow.
         piston.MinLimit = (float)pistonMinLength;
         piston.MaxLimit = (float)pistonMaxLength;
 
-        // Set the Velocity to zero
+        // Set the Velocity to zero.
         piston.Velocity = 0;
     }
+}
+
+/**
+ * Turn off the given piston, and set its velocity to zero.
+ */
+private void StopPiston(IMyPistonBase piston)
+{
+    // Turn the piston on
+    piston.Enabled = false
+
+    // Set its velocity to zero
+    piston.Velocity = 0;
 }
 
 /**
@@ -344,12 +359,18 @@ public void Main(string arg)
     EchoOutput();
 
     // Check the script state
-    // - "Working": Pistons are going, rotor is spinning, drills are on
-    // - "Retracting:Delay": Timer after the pistons are done extending that the
-    // system waits before retracting the pistons
-    // - "Retracting": Currently retracting the pistons
+    // - "Starting": Running some start up commands and setting up some values.
+    // - "Extending": Pistons are going, rotor is spinning, drills are on.
+    // - "LowPower": The state that gets set when power is below a certain
+    // percentage, and will stay until it gets above a certain percentage. Pauses
+    // mining and turns off the refineries (if there is any) to save some power.
+    // - "FullStorage": The state that gets set when the input storage cargo is
+    // too full. Pauses mining.
+    // - "Retracting:Delay": Timer for after the pistons are done extending that
+    // the system waits before retracting the pistons.
+    // - "Retracting": Currently retracting the pistons.
     // - "Completed": The state that the script goes in to once it's completely
-    // done running
+    // done running.
     switch (scriptState) {
         case "Starting":
             SetUpPistons(pistonBlocks);
@@ -362,6 +383,38 @@ public void Main(string arg)
                 scriptState = "Retracting:Delay";
             } else {
                 ExtendPiston(currentPiston);
+            }
+
+            // Check if the battery is too low
+            if (BatteryPercentage(batteryBlocks) <= batteryLowerLimit) {
+                scriptState = "LowPower";
+            }
+
+            // Check if the cargo is too full
+            if (CargoFullPercentage(inputCargoBlocks) >= cargoUpperLimit) {
+                scriptState = "FullStorage";
+            }
+            break;
+
+        case "LowPower":
+            // WIP. Need to shut off refineries and pause drilling
+            // Stop the current piston from extending.
+            StopPiston(currentPiston);
+
+            // If it is above the current limit, set it back to extending.
+            if (BatteryPercentage(batteryBlocks) >= batteryUpperLimit) {
+                scriptState = "Extending";
+            }
+            break;
+
+        case "FullStorage":
+            // WIP. Need to pause drilling
+            // Stop the current piston from extending.
+            StopPiston(currentPiston);
+
+            // If it is above the current limit, set it back to extending.
+            if (CargoFullPercentage(inputCargoBlocks) <= cargoLowerLimit) {
+                scriptState = "Extending";
             }
             break;
 
@@ -381,6 +434,9 @@ public void Main(string arg)
             } else {
                 RetractPiston(currentPiston);
             }
+            break;
+
+        case "Completed":
             break;
 
         default:
