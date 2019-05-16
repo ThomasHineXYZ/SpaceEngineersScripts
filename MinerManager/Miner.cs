@@ -56,8 +56,8 @@ int delay = 0;
 string heartBeat = "|";
 string scriptState = "Starting";
 
-IMyPistonBase currentPiston = null;
 IMyMotorAdvancedRotor advancedRotor = null;
+IMyPistonBase currentPiston = null;
 
 List<IMyBatteryBlock> batteryBlocks = new List<IMyBatteryBlock>();
 List<IMyShipDrill> drillBlocks = new List<IMyShipDrill>();
@@ -83,24 +83,6 @@ public Program() {
         return;
     }
 
-    // Grab the group of cargo containers, and check that it exists. Set them up.
-    IMyBlockGroup inputCargoGroup = GridTerminalSystem.GetBlockGroupWithName(inputCargoGroupName);
-    if (inputCargoGroup == null) {
-        Echo("Cargo group not found.\r\nPlease change the 'inputCargoGroupName' variable");
-        return;
-    }
-    inputCargoGroup.GetBlocksOfType<IMyCargoContainer>(inputCargoBlocks);
-    Echo($"Set up {inputCargoBlocks.Count} input cargo containers.");
-
-    // Grab the group of pistons, and check that it exists. Then set them up.
-    IMyBlockGroup pistonBlockGroup = GridTerminalSystem.GetBlockGroupWithName(pistonBlockGroupName);
-    if (pistonBlockGroup == null) {
-        Echo("Piston group not found.\r\nPlease change the 'pistonBlockGroupName' variable");
-        return;
-    }
-    pistonBlockGroup.GetBlocksOfType<IMyPistonBase>(pistonBlocks);
-    Echo($"Set up {pistonBlocks.Count} pistons.");
-
     // Set up a list for all batteries, and check if any batteries are available
     // on the same immediate grid.
     GridTerminalSystem.GetBlocksOfType<IMyBatteryBlock>(batteryBlocks, block => block.IsSameConstructAs(Me));
@@ -118,8 +100,26 @@ public Program() {
     }
     Echo($"Found {drillBlocks.Count} drills.");
 
+    // Grab the group of cargo containers, and check that it exists. Set them up.
+    IMyBlockGroup inputCargoGroup = GridTerminalSystem.GetBlockGroupWithName(inputCargoGroupName);
+    if (inputCargoGroup == null) {
+        Echo("Cargo group not found.\r\nPlease change the 'inputCargoGroupName' variable");
+        return;
+    }
+    inputCargoGroup.GetBlocksOfType<IMyCargoContainer>(inputCargoBlocks);
+    Echo($"Set up {inputCargoBlocks.Count} input cargo containers.");
+
     // Set up the LCDs.
     GridTerminalSystem.GetBlocksOfType<IMyTextPanel>(outputLcds, block => block.CustomName.Contains("!MinerManagerOutput"));
+
+    // Grab the group of pistons, and check that it exists. Then set them up.
+    IMyBlockGroup pistonBlockGroup = GridTerminalSystem.GetBlockGroupWithName(pistonBlockGroupName);
+    if (pistonBlockGroup == null) {
+        Echo("Piston group not found.\r\nPlease change the 'pistonBlockGroupName' variable");
+        return;
+    }
+    pistonBlockGroup.GetBlocksOfType<IMyPistonBase>(pistonBlocks);
+    Echo($"Set up {pistonBlocks.Count} pistons.");
 
     // Assume everything in here ran and set up correctly.
     compileSuccess = true;
